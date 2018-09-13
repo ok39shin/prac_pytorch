@@ -1,2 +1,6 @@
+*~
 .*~
 *.swp
+.*.swp
+mytorch/__pycache__
+.python-version
