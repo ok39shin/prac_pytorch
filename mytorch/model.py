@@ -65,6 +65,7 @@ class CNN2d(nn.Module):
             sigmoid : flag of sigmoid at last layer
         '''
         nn.Module.__init__(self)
+        # super(CNN2d, self).__init__()
         self.mtype = 'CNN2d'
         self.indims = self._int2tuple(indims)
         f_nums = [first_fnum] + f_nums
