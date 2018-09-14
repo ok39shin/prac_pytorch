@@ -15,13 +15,13 @@ import torch.nn.functional as F
 class NN(nn.Module):
     def __init__(self, indim, hiddims, outdim, sigmoid=False):
         # sigmoid = True -> loss = BCELoss
-        super(NN, self).__init__()
+        nn.Module.__init__(self)
         self.mtype = 'NN'
         self.indim = indim
         self.hiddims = hiddims
         self.outdim = outdim
         self.sigmoid = sigmoid
-        
+
         # set layers
         self.layers = nn.Sequential()
         dims = [indim] + hiddims + [outdim]
@@ -36,7 +36,7 @@ class NN(nn.Module):
                     )
         if sigmoid:
             self.layers.add_module('Sigmoid', nn.Sigmoid())
-    
+
     def forward(self, x):
         x = self.layers(x)
         return x
@@ -44,12 +44,12 @@ class NN(nn.Module):
 class NN_classifier(NN):
     def __init__(self, indim, nhid, hiddim, nclass):
         hiddims = [hiddim] * nhid
-        super(NN_classifier, self).__init__(indim, hiddims, nclass, sigmoid=False)
+        NN.__init__(self, indim, hiddims, nclass, sigmoid=False)
         self.mtype = 'NN_classifier'
         self.nhid = nhid
         self.hiddim = hiddim
         self.nclass = nclass
-        self.layers.add_module('Softmax', nn.Softmax())
+        self.layers.add_module('Softmax', nn.Softmax(dim=0))
 
 class CNN2d(nn.Module):
     def __init__(self, indims, f_nums, f_sizs, strides, first_fnum=1, pool=None, sigmoid=False):
@@ -64,7 +64,7 @@ class CNN2d(nn.Module):
             pool    : pooling layer
             sigmoid : flag of sigmoid at last layer
         '''
-        super(CNN2d, self).__init__()
+        nn.Module.__init__(self)
         self.mtype = 'CNN2d'
         self.indims = self._int2tuple(indims)
         f_nums = [first_fnum] + f_nums
@@ -122,21 +122,21 @@ class CNN2d(nn.Module):
             ndims.append(tuple([(ndims[i][j]+2*self.pads[i][j]-self.f_sizs[i][j])//self.strides[i][j]+1 for j in range(len(ndims[i]))]))
         return ndims
 
-class CNN2d_classifier(NN_classifier, CNN2d):
+class CNN2d_classifier(CNN2d, NN_classifier):
     def __init__(self, indims, f_num, f_siz, strides, c_nlay, c_laydim, c_out, first_fnum=1, pool=None, sigmoid=False):
-        super(CNN2d_classifier, self).__init__(indims, f_num, f_siz, strides, first_fnum=first_fnum, pool=pool, sigmoid=False)
-        self.CNNlayer = copy.copy(self.layers)
-        print(self.layers)
-        c_indim = 1
+        CNN2d.__init__(self, indims, f_num, f_siz, strides, first_fnum=first_fnum, pool=pool, sigmoid=False)
+        CNNlayers = copy.copy(self.layers)
+        c_indim = self.f_nums[-1]
         for dim in self.ndims[-1]:
             c_indim *= dim
-        super(CNN2d, self).__init__(c_indim, c_nlay, c_laydim, c_out)
-        self.clslayer = copy.copy(self.layers)
-        print(self.layers)
+        NN_classifier.__init__(self, c_indim, c_nlay, c_laydim, c_out)
+        CLSlayers = copy.copy(self.layers)
         self.mtype = 'CNN2d_classifer'
+        self.CNNlayers = CNNlayers
+        self.CLSlayers = CLSlayers
 
     def forward(self, x):
-        x = self.clslayer(self.CNNlayer(x))
+        x = self.CLSlayers(self.CNNlayers(x).view(-1, self.indim))
         return x
 
 if __name__ == '__main__':
