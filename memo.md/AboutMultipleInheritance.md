@@ -4,6 +4,10 @@
 - Already I had made CNN model(A) & NN-classifier model(B).
 - I thought I want to inherit A & B to make CNN-classifier model, but it wouldn't working.
 
+## 対象
+- `180912_NNprac_MNIST/mytorch/model.py`
+- What is `CLS.mro()`
+
 ## environment
 - python 3.6.5
 - pytorch 0.4.1

@@ -49,7 +49,9 @@ class NN_classifier(NN):
         self.nhid = nhid
         self.hiddim = hiddim
         self.nclass = nclass
-        self.layers.add_module('Softmax', nn.Softmax(dim=0))
+        self.layers.add_module('LogSoftmax', nn.LogSoftmax(dim=0))
+
+        self.lossf = nn.NLLLoss()
 
 class CNN2d(nn.Module):
     def __init__(self, indims, f_nums, f_sizs, strides, first_fnum=1, pool=None, sigmoid=False):
@@ -118,27 +120,34 @@ class CNN2d(nn.Module):
         return pads
 
     def _get_ndims(self):
+        # https://deepage.net/deep_learning/2016/11/07/convolutional_neural_network.html#convolutional-neural-networkの特徴
         ndims = [self.indims]
         for i in range(self._nlay):
             ndims.append(tuple([(ndims[i][j]+2*self.pads[i][j]-self.f_sizs[i][j])//self.strides[i][j]+1 for j in range(len(ndims[i]))]))
         return ndims
 
 class CNN2d_classifier(CNN2d, NN_classifier):
-    def __init__(self, indims, f_num, f_siz, strides, c_nlay, c_laydim, c_out, first_fnum=1, pool=None, sigmoid=False):
+    def __init__(self, indims, f_num, f_siz, strides, c_nlay, c_laydim, c_out, first_fnum=1, pool=None):
         CNN2d.__init__(self, indims, f_num, f_siz, strides, first_fnum=first_fnum, pool=pool, sigmoid=False)
         CNNlayers = copy.copy(self.layers)
         c_indim = self.f_nums[-1]
         for dim in self.ndims[-1]:
             c_indim *= dim
-        NN_classifier.__init__(self, c_indim, c_nlay, c_laydim, c_out)
-        CLSlayers = copy.copy(self.layers)
-        self.mtype = 'CNN2d_classifer'
+        if c_nlay > 0:
+            NN_classifier.__init__(self, c_indim, c_nlay, c_laydim, c_out)
+            CLSlayers = copy.copy(self.layers)
+        else:
+            CLSlayers = self.passf()
+        self.mtype = 'CNN2d_classifier'
         self.CNNlayers = CNNlayers
         self.CLSlayers = CLSlayers
 
     def forward(self, x):
         x = self.CLSlayers(self.CNNlayers(x).view(-1, self.indim))
         return x
+
+    def passf(self):
+        pass
 
 if __name__ == '__main__':
     indim, hiddims, outdim = 32, [256, 256], 10
