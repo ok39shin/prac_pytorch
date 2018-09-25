@@ -1,6 +1,6 @@
 #/usr/bin/env python
 import torch
-from model import NN, NN_classifier, CNN2d, CNN2d_classifier
+from mytorch.model import NN, NN_classifier, CNN2d, CNN2d_classifier
 
 def t_NN():
     indim = 28*28
