@@ -12,6 +12,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .model import CNN2d, CNNtrans2d
+
 ### Auto Encoder ###
 class AE_encoder(nn.Module):
     def __init__(self, indim, hiddims, zdim, activ=nn.LeakyReLU()):
@@ -46,7 +48,7 @@ class AE_decoder(nn.Module):
         self.indim = indim
         self.activ = activ
         if sigmoid:
-            self.sigmoid = nn.Sigmoid()
+            self.sigmoid = True
         else:
             self.sigmoid = None
         self.layers = self._set_layers()
@@ -63,7 +65,7 @@ class AE_decoder(nn.Module):
                                   self.activ)
             else:
                 if self.sigmoid:
-                    layers.add_module('sigmoid', self.sigmoid)
+                    layers.add_module('sigmoid', nn.Sigmoid())
         return layers
 
     def forward(self, z):
@@ -86,6 +88,7 @@ class AE(nn.Module):
 ### Variational Auto Encoder ###
 class VAE_encoder(AE_encoder):
     def __init__(self, indim, hiddims, zdim, activ=nn.LeakyReLU()):
+        assert len(hiddims) > 0
         hiddim_last = hiddims[-1]
         hiddims_mid = hiddims[:-1]
         super(VAE_encoder, self).__init__(indim, hiddims_mid, hiddim_last, activ=activ)
@@ -124,3 +127,31 @@ class VAE(nn.Module):
             return eps.mul(std).add(mu)
         else:
             return mu
+
+### Convolutional Auto Encoder
+class CAE_encoder(CNN2d):
+    def __init__(self, indims, f_nums, f_sizs, strides, first_fnum=1, activ=nn.LeakyReLU(), pool=None, sigmoid=False):
+        super(CAE_encoder, self).__init__(indims, f_nums, f_sizs, strides, first_fnum=first_fnum, activ=activ, pool=pool, sigmoid=sigmoid)
+
+class CAE_decoder(CNNtrans2d):
+    def __init__(self, ndims_rv, f_nums_rv, f_sizs_rv, strides_rv, last_fnum=1, activ=nn.LeakyReLU()):
+        super(CAE_decoder, self).__init__(ndims_rv, f_nums_rv, f_sizs_rv, strides_rv, last_fnum=last_fnum, activ=activ)
+
+class CAE(nn.Module):
+    def __init__(self, indims, f_nums, f_sizs, strides, first_fnum=1, last_fnum=1, activ=nn.LeakyReLU()):
+        super(CAE, self).__init__()
+        self.mtype = 'CAE'
+        self.encoder = CAE_encoder(indims, f_nums, f_sizs, strides, first_fnum=first_fnum)
+        ndims_rv = self._rv_list(self.encoder.ndims)
+        f_nums_rv = self._rv_list(f_nums)
+        f_sizs_rv = self._rv_list(f_sizs)
+        strides_rv = self._rv_list(strides)
+        self.decoder = CAE_decoder(ndims_rv, f_nums_rv, f_sizs_rv, strides_rv, last_fnum=last_fnum)
+
+    def _rv_list(self, li):
+        return [li[-i-1] for i in range(len(li))]
+
+    def forward(self, x):
+        z = self.encoder(x)
+        y = self.decoder(z)
+        return y
