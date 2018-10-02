@@ -5,4 +5,6 @@
 __pycache__
 .python-version
 .pytest_cache
-
+.DS_Store
+@eaDir
+*.png
