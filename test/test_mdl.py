@@ -37,7 +37,7 @@ def t_NN_classifier():
     y = mdl(x)
     assert y.shape == (bs, nclass)
 
-def t_CNN2d_classifier():
+def test_CNN2d_classifier():
     indims = 28
     f_nums = [10, 20, 30]
     f_sizs = [9, 7, 5]
@@ -47,10 +47,10 @@ def t_CNN2d_classifier():
     c_out = 10
     bs = 10
     mdl = CNN2d_classifier(indims, f_nums, f_sizs, strides, c_nlay, c_laydim, c_out)
-    x = torch.randn(bs, 1, mdl.indims[0], mdl.indims[1])
-    y_CNN = mdl.CNNlayers(x)
-    assert y_CNN.shape == (bs, f_nums[-1], mdl.ndims[-1][0], mdl.ndims[-1][1])
-    y_CLS = mdl.CLSlayers(y_CNN.view(bs, -1))
+    x = torch.randn(bs, 1, mdl.CNN.indims[0], mdl.CNN.indims[1])
+    y_CNN = mdl.CNN.layers(x)
+    assert y_CNN.shape == (bs, f_nums[-1], mdl.CNN.ndims[-1][0], mdl.CNN.ndims[-1][1])
+    y_CLS = mdl.CLS.layers(y_CNN.view(bs, -1))
     assert y_CLS.shape == (bs, c_out)
     y = mdl(x)
     assert y.shape == (bs, c_out)
