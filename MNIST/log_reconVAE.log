@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "reconstruction_MNIST.py", line 136, in <module>
+    main()
+  File "reconstruction_MNIST.py", line 132, in main
+    train(args, model, device, train_loader, optimizer, epoch, lossf=lossf, view=view)
+  File "reconstruction_MNIST.py", line 28, in train
+    output = torch.sigmoid(model(data)) if lossf.__class__ == nn.BCELoss else model(data)
+  File "/home/okashin17/.pyenv/versions/3.6.5_pytorchprac/lib/python3.6/site-packages/torch/nn/modules/module.py", line 477, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/nas01/homes/okashin17-1000009/work/180912_myDNNmodels/MNIST/mytorch/ae.py", line 119, in forward
+    z_smp = self.sample_latent(mu, logvar)
+  File "/nas01/homes/okashin17-1000009/work/180912_myDNNmodels/MNIST/mytorch/ae.py", line 127, in sample_latent
+    return eps.mul(std).add(mu)
+RuntimeError: Expected object of type torch.FloatTensor but found type torch.cuda.FloatTensor for argument #2 'other'
